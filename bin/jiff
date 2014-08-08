@@ -8,7 +8,7 @@
 var fs = require('fs');
 $ = {};
 $.fn = {};
-require('./jsonDiff');
+require(__dirname+'/../jsonDiff');
 var jsonDiff = $.fn.jsonDiff();
 var argv = require('minimist')(process.argv.slice(2));
 
@@ -23,7 +23,6 @@ var printUsage = function () {
 
 if (argv._.length < 2) {
   console.log("Invalid number of arguments ("+argv._.length+")");
-  console.log(argv);
   printUsage();
 }
 
