@@ -1,6 +1,6 @@
 /*!
- * JavascriptUtils Library v0.1.0
- * https://github.com/lcavadas/JavascriptUtils
+ * Javascript diff tool for JSON 0.0.1
+ * https://github.com/lcavadas/jiff
  *
  * Copyright 2014, Luís Serralheiro
  */
