@@ -1,0 +1,165 @@
+#!/usr/bin/env node
+/*!
+ * JavascriptUtils Library v0.1.0
+ * https://github.com/lcavadas/JavascriptUtils
+ *
+ * Copyright 2014, Luís Serralheiro
+ */
+var fs = require('fs');
+$ = {};
+$.fn = {};
+require('./jsonDiff');
+var jsonDiff = $.fn.jsonDiff();
+var argv = require('minimist')(process.argv.slice(2));
+
+var printUsage = function () {
+  console.log("Usage: " + process.argv[1] + " file1 file2 [-o outFile] [-r][-m][-x]");
+  console.log("\t-o outFile        Defines the file (outFile) were the diff results are saved to");
+  console.log("\t-r                Generate an html \"report\" file. Only valid when using the -o and -m option.");
+  console.log("\t-m                Generate a \"merge\" file. The file will have annotated structure on the changes");
+  console.log("\t-x                Creates diff with mapping all properties even the unchanged ones (only valid when not using -m)");
+  process.exit(0);
+};
+
+if (argv._.length < 2) {
+  console.log("Invalid number of arguments ("+argv._.length+")");
+  console.log(argv);
+  printUsage();
+}
+
+var readA = JSON.parse(fs.readFileSync(argv._[0], {encoding: 'utf8'}));
+var readB = JSON.parse(fs.readFileSync(argv._[1], {encoding: 'utf8'}));
+
+var output;
+if (argv.m) {
+  output = JSON.stringify(jsonDiff.merge(readA, readB), null, 4);
+}
+else {
+  if (argv.x) {
+    output = JSON.stringify(jsonDiff.extendedDiff(readA, readB), null, 4);
+  } else {
+    output = JSON.stringify(jsonDiff.diff(readA, readB), null, 4);
+  }
+}
+
+var clickHandler = function (el) {
+  if (el.getAttribute('class').indexOf('expandable') === -1) {
+    return;
+  }
+  var parentNode = el.parentNode;
+  var icon = parentNode.getElementsByTagName('span')[0];
+  var list = parentNode.getElementsByTagName('ul')[0];
+
+  if (icon.innerHTML === '+') {
+    icon.innerHTML = '-';
+  } else {
+    icon.innerHTML = '+';
+  }
+
+  if (list.getAttribute('class') === 'hidden') {
+    list.setAttribute('class', '')
+  } else {
+    list.setAttribute('class', 'hidden')
+  }
+};
+
+var generateElement = function (obj, isOpen, inheritedType) {
+  var prop;
+  var html = '<ul class="' + (isOpen ? '' : 'hidden') + '">';
+  for (prop in obj) {
+    if (obj.hasOwnProperty(prop) && prop !== '___type') {
+      var localType = inheritedType || (jsonDiff.isNotNull(obj[prop]) ? obj[prop].___type : undefined);
+      html += '<li>';
+
+      var val;
+      var valIsObj;
+      if (jsonDiff.isNotNull(obj[prop]) && obj[prop].___leftValue !== undefined) {
+        val = obj[prop].___leftValue;
+      } else if (jsonDiff.isNotNull(obj[prop]) && obj[prop].___rightValue !== undefined) {
+        val = obj[prop].___rightValue
+      } else {
+        val = obj[prop];
+      }
+      valIsObj = jsonDiff.isObject(val);
+
+      if (valIsObj) {
+        html += '<span class="expand-collapse expandable" onclick="clickHandler(this)">+</span>';
+      }
+
+      html += '<span class="bubble ' + (valIsObj ? 'expandable' : '') + ' bubble-' + localType + '" onclick="clickHandler(this)">' + prop + '</span>';
+
+      if (jsonDiff.isObject(val)) {
+        html += generateElement(val, false, localType !== 'innerChange' ? localType : null);
+      }
+      else {
+        html += '<span class="value"> : </span>'
+        if (jsonDiff.isNotNull(obj[prop]) && obj[prop].___leftValue === undefined && obj[prop].___rightValue === undefined) {
+          html += '<span class="value ' + localType + '">' + obj[prop] + '</span>'
+        }
+
+        if (jsonDiff.isNotNull(obj[prop]) && jsonDiff.isNotNull(obj[prop].___leftValue)) {
+          html += '<span class="value ' + localType + '">' + obj[prop].___leftValue + '</span>'
+        }
+
+        if (localType === 'changed') {
+          html += '<span class="value"> => </span>';
+        }
+
+        if (jsonDiff.isNotNull(obj[prop]) && jsonDiff.isNotNull(obj[prop].___rightValue)) {
+          html += '<span class="value ' + localType + '">' + obj[prop].___rightValue + '</span>';
+        }
+      }
+
+      html += '</li>';
+    }
+  }
+  html += '</ul>';
+  return html;
+};
+
+var generateReport = function (json) {
+  var font = 'Sniglet';
+  var html = '<html><head>' +
+    '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=' + font + '">' +
+    '<style>' +
+    'body{ -webkit-user-select: none; -moz-user-select: none; -khtml-user-select: none; -ms-user-select: none;font-family: "' + font + '", serif; font-weight:bolder; font-size:12px;}' +
+    'li{opacity: 0.9;margin: 5px 0 5px 0;list-style: none;cursor: default;line-height: 24px;} ' +
+    'li:hover{opacity:1;} ' +
+    '.bubble{padding: 5px 10px 5px 10px; border-radius: 1em;} ' +
+    '.bubble-innerChange{background-color: #67BCDB; color:#ffffff;} ' +
+    '.innerChange{color: #67BCDB;} ' +
+    '.bubble-changed{background-color: #EE9A00; color:#ffffff;} ' +
+    '.changed{color: #EE9A00;} ' +
+    '.bubble-added{background-color: #118C4E; color:#ffffff;} ' +
+    '.added{color: #118C4E;} ' +
+    '.bubble-removed{background-color: #E44424; color:#ffffff;} ' +
+    '.removed{color: #E44424;} ' +
+    '.bubble-undefined{background-color:#ddd; color:#585858;} ' +
+    '.undefined{color:#585858;} ' +
+    '.expand-collapse{position:absolute; margin-left: -20px;} ' +
+    '.expandable{cursor:pointer;} ' +
+    '.hidden{display:none;} ' +
+    '</style>' +
+    '<script type="text/javascript">' +
+    'clickHandler=' + clickHandler +
+    '</script> ' +
+    '</head><body><div style="display: inline-block;">';
+  var obj = JSON.parse(json);
+  html += generateElement(obj, true);
+  html += '</div></body></html>';
+  return html;
+};
+
+if (argv.o) {
+  if (argv.r) {
+    if (argv.m) {
+      fs.writeFileSync(argv.o, generateReport(output));
+    } else {
+      printUsage();
+    }
+  } else {
+    fs.writeFileSync(argv.o, output);
+  }
+} else {
+  console.log(output);
+}

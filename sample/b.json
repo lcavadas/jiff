@@ -1,0 +1,62 @@
+{
+  "sameText": "sameText",
+  "sameNumber": 1,
+  "sameBoolean": true,
+  "changeText": "otherText",
+  "changeNumber": 2,
+  "changeBoolean": false,
+  "add": "added",
+  "array": [
+    "same",
+    "change2",
+    "remove",
+    {
+      "sameText": "sameText",
+      "sameNumber": 1,
+      "sameBoolean": true,
+      "changeText": "sameText",
+      "changeNumber": 1,
+      "changeBoolean": true,
+      "remove": false
+    },
+    {
+      "sameText": "sameText",
+      "sameNumber": 1,
+      "sameBoolean": true,
+      "changeText": "otherText",
+      "changeNumber": 2,
+      "changeBoolean": false,
+      "add": "added"
+    },
+    {
+      "new": "element"
+    }
+  ],
+  "nestedSame": {
+    "sameText": "sameText",
+    "sameNumber": 1,
+    "sameBoolean": true,
+    "changeText": "sameText",
+    "changeNumber": 1,
+    "changeBoolean": true,
+    "remove": false
+  },
+  "nestedChange": {
+    "sameText": "sameText",
+    "sameNumber": 1,
+    "sameBoolean": true,
+    "changeText": "otherText",
+    "changeNumber": 2,
+    "changeBoolean": false,
+    "add": "added"
+  },
+  "nestedAdd": {
+    "sameText": "sameText",
+    "sameNumber": 1,
+    "sameBoolean": true,
+    "changeText": "otherText",
+    "changeNumber": 2,
+    "changeBoolean": false,
+    "add": "added"
+  }
+}
