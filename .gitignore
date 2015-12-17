@@ -1,3 +1,5 @@
 node_modules
 jiff.iml
+.DS_Store
+.idea
 index.html
